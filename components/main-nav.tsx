@@ -13,7 +13,7 @@ export default function MainNav() {
     <nav className="border-b bg-white">
       <div className="mx-auto flex max-w-7xl gap-4 p-4">
         <Link href="/" className="mr-4 font-bold">
-          Attendance App
+          SLB Workers
         </Link>
 
         {links.map((link) => (
