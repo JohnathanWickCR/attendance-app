@@ -2,22 +2,36 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export default function WorkerActions({ worker }: any) {
   const supabase = createClient();
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   const handleDelete = async () => {
-    const confirmDelete = confirm('Xóa công nhân này?');
+    const confirmDelete = confirm(`Xóa ${worker.full_name}?`);
     if (!confirmDelete) return;
 
-    await supabase.from('workers').delete().eq('id', worker.id);
+    setLoading(true);
 
-    router.refresh(); // reload lại data
+    const { error } = await supabase
+      .from('workers')
+      .delete()
+      .eq('id', worker.id);
+
+    setLoading(false);
+
+    if (error) {
+      alert('Xóa thất bại: ' + error.message);
+      return;
+    }
+
+    router.refresh(); // reload lại danh sách
   };
 
   const handleEdit = () => {
-    // tạm thời log ra, bước sau mình nối với form
+    // bước sau sẽ nối form
     alert(`Sửa: ${worker.full_name}`);
   };
 
@@ -32,9 +46,10 @@ export default function WorkerActions({ worker }: any) {
 
       <button
         onClick={handleDelete}
-        className="px-2 py-1 text-xs bg-red-500 text-white rounded"
+        disabled={loading}
+        className="px-2 py-1 text-xs bg-red-500 text-white rounded disabled:opacity-50"
       >
-        Xóa
+        {loading ? '...' : 'Xóa'}
       </button>
     </div>
   );
