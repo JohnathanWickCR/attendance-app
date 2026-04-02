@@ -12,7 +12,7 @@ export default async function WorkersTable() {
           <tr className="border-b bg-muted/50">
             <th className="px-4 py-2 text-left font-medium">Mã</th>
             <th className="px-4 py-2 text-left font-medium">Tên</th>
-            <th className="px-4 py-2 text-left font-medium">Đơn giá</th>
+            
           </tr>
         </thead>
 
@@ -21,7 +21,7 @@ export default async function WorkersTable() {
             <tr key={w.id} className="border-b hover:bg-muted/30 transition">
               <td className="px-4 py-2 align-middle">{w.worker_code}</td>
               <td className="px-4 py-2 align-middle">{w.full_name}</td>
-              <td className="px-4 py-2 align-middle">{w.labor_rate_per_hour}</td>
+             
             </tr>
           ))}
         </tbody>
