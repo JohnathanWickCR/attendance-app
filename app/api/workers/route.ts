@@ -6,8 +6,8 @@ const workerSchema = z.object({
   worker_code: z.string().min(1, 'Mã công nhân là bắt buộc'),
   full_name: z.string().min(1, 'Họ tên là bắt buộc'),
   team_name: z.string().optional(),
-  skill_name: z.string().optional(),
-  labor_rate_per_hour: z.number().min(0, 'Đơn giá phải >= 0'),
+  
+ 
   overtime_multiplier: z.number().min(1, 'Hệ số tăng ca phải >= 1'),
 });
 
@@ -23,8 +23,8 @@ export async function POST(request: Request) {
         worker_code: parsed.worker_code,
         full_name: parsed.full_name,
         team_name: parsed.team_name || null,
-        skill_name: parsed.skill_name || null,
-        labor_rate_per_hour: parsed.labor_rate_per_hour,
+        
+        
         overtime_multiplier: parsed.overtime_multiplier,
       })
       .select()

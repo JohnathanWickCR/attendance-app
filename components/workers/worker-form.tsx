@@ -48,8 +48,7 @@ export default function WorkerForm() {
       <input placeholder="Tổ đội" className="border p-2 w-full"
         onChange={e => setForm({ ...form, team_name: e.target.value })} />
 
-      <input placeholder="Tay nghề" className="border p-2 w-full"
-        onChange={e => setForm({ ...form, skill_name: e.target.value })} />
+    
 
       
 
