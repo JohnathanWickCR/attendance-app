@@ -1,55 +1,67 @@
 'use client';
 
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function WorkerActions({ worker }: any) {
   const supabase = createClient();
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const handleDelete = async () => {
-    const confirmDelete = confirm(`Xóa ${worker.full_name}?`);
-    if (!confirmDelete) return;
+    const ok = window.confirm(`Xóa ${worker.full_name}?`);
+    if (!ok) return;
 
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const { error } = await supabase
-      .from('workers')
-      .delete()
-      .eq('id', worker.id);
+      const { data, error } = await supabase
+        .from('workers')
+        .delete()
+        .eq('id', worker.id)
+        .select();
 
-    setLoading(false);
+      console.log('DELETE RESULT:', { data, error, workerId: worker.id });
 
-    if (error) {
-      alert('Xóa thất bại: ' + error.message);
-      return;
+      if (error) {
+        alert('Xóa thất bại: ' + error.message);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        alert('Không xóa được bản ghi này.');
+        return;
+      }
+
+      alert('Đã xóa thành công');
+      window.location.reload();
+    } catch (err: any) {
+      alert('Có lỗi khi xóa: ' + (err?.message || 'Unknown error'));
+    } finally {
+      setLoading(false);
     }
-
-    router.refresh(); // reload lại danh sách
   };
 
   const handleEdit = () => {
-    // bước sau sẽ nối form
     alert(`Sửa: ${worker.full_name}`);
   };
 
   return (
     <div className="flex gap-2">
       <button
+        type="button"
         onClick={handleEdit}
-        className="px-2 py-1 text-xs bg-blue-500 text-white rounded"
+        className="rounded bg-blue-500 px-2 py-1 text-xs text-white"
       >
         Sửa
       </button>
 
       <button
+        type="button"
         onClick={handleDelete}
         disabled={loading}
-        className="px-2 py-1 text-xs bg-red-500 text-white rounded disabled:opacity-50"
+        className="rounded bg-red-500 px-2 py-1 text-xs text-white disabled:opacity-50"
       >
-        {loading ? '...' : 'Xóa'}
+        {loading ? 'Đang xóa...' : 'Xóa'}
       </button>
     </div>
   );
