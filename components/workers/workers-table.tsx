@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import WorkerActions from './worker-actions';
 
 export default async function WorkersTable() {
   const supabase = await createClient();
@@ -12,7 +13,7 @@ export default async function WorkersTable() {
           <tr className="border-b bg-muted/50">
             <th className="px-4 py-2 text-left font-medium">Mã</th>
             <th className="px-4 py-2 text-left font-medium">Tên</th>
-            
+            <th className="px-4 py-2 text-left font-medium">Hành động</th>
           </tr>
         </thead>
 
@@ -21,7 +22,10 @@ export default async function WorkersTable() {
             <tr key={w.id} className="border-b hover:bg-muted/30 transition">
               <td className="px-4 py-2 align-middle">{w.worker_code}</td>
               <td className="px-4 py-2 align-middle">{w.full_name}</td>
-             
+
+              <td className="px-4 py-2">
+                <WorkerActions worker={w} />
+              </td>
             </tr>
           ))}
         </tbody>
