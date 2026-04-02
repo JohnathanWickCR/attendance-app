@@ -8,7 +8,7 @@ export default function WorkerForm() {
     full_name: '',
     team_name: '',
     skill_name: '',
-    labor_rate_per_hour: 0,
+    
     overtime_multiplier: 1.5,
   });
 
@@ -51,9 +51,7 @@ export default function WorkerForm() {
       <input placeholder="Tay nghề" className="border p-2 w-full"
         onChange={e => setForm({ ...form, skill_name: e.target.value })} />
 
-      <input type="number" placeholder="Đơn giá"
-        className="border p-2 w-full"
-        onChange={e => setForm({ ...form, labor_rate_per_hour: Number(e.target.value) })} />
+      
 
       <button className="bg-black text-white px-4 py-2 rounded">
         Lưu
