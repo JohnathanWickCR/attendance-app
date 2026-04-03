@@ -8,10 +8,49 @@ const projectSchema = z.object({
   description: z.string().optional(),
 });
 
+async function ensureUniqueProjectName(
+  projectName: string,
+  excludeId?: string
+) {
+  const supabase = await createClient();
+  let query = supabase
+    .from('projects')
+    .select('id')
+    .eq('project_name', projectName)
+    .limit(1);
+
+  if (excludeId) {
+    query = query.neq('id', excludeId);
+  }
+
+  const { data, error } = await query.maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (data) {
+    throw new Error('Tên khách hàng đã tồn tại');
+  }
+}
+
+function toProjectErrorMessage(error: unknown) {
+  if (!(error instanceof Error)) {
+    return 'Lỗi hệ thống';
+  }
+
+  if (error.message.includes('projects_project_code_key')) {
+    return 'Database hiện vẫn đang khóa trùng mã dự án. Cần bỏ unique constraint của project_code trong Supabase.';
+  }
+
+  return error.message;
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const parsed = projectSchema.parse(body);
+    await ensureUniqueProjectName(parsed.project_name);
     const supabase = await createClient();
 
     const { data, error } = await supabase
@@ -25,7 +64,10 @@ export async function POST(request: Request) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return NextResponse.json(
+        { error: toProjectErrorMessage(new Error(error.message)) },
+        { status: 400 }
+      );
     }
 
     return NextResponse.json(data, { status: 201 });
@@ -37,7 +79,10 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ error: 'Lỗi hệ thống' }, { status: 500 });
+    return NextResponse.json(
+      { error: toProjectErrorMessage(error) },
+      { status: 400 }
+    );
   }
 }
 
@@ -49,6 +94,7 @@ export async function PATCH(request: Request) {
         id: z.string().uuid('id không hợp lệ'),
       })
       .parse(body);
+    await ensureUniqueProjectName(parsed.project_name, parsed.id);
     const supabase = await createClient();
 
     const { data, error } = await supabase
@@ -63,7 +109,10 @@ export async function PATCH(request: Request) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return NextResponse.json(
+        { error: toProjectErrorMessage(new Error(error.message)) },
+        { status: 400 }
+      );
     }
 
     return NextResponse.json(data);
@@ -75,7 +124,10 @@ export async function PATCH(request: Request) {
       );
     }
 
-    return NextResponse.json({ error: 'Lỗi hệ thống' }, { status: 500 });
+    return NextResponse.json(
+      { error: toProjectErrorMessage(error) },
+      { status: 400 }
+    );
   }
 }
 
