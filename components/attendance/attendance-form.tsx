@@ -11,12 +11,14 @@ export type AttendanceProjectOption = {
 export type AttendanceTaskOption = {
   id: string;
   project_id: string;
+  project_code: string;
   task_name: string;
 };
 
 export type EditingAttendance = {
   id: string;
   work_date: string;
+  project_code: string;
   project_id: string;
   task_id: string;
   worker_count: number;
@@ -37,6 +39,7 @@ export default function AttendanceForm({
 }: Props) {
   const [form, setForm] = useState({
     work_date: '',
+    project_code: '',
     project_id: '',
     task_id: '',
     worker_count: 1,
@@ -46,9 +49,14 @@ export default function AttendanceForm({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const editingProject = editingAttendance
+      ? projects.find((project) => project.id === editingAttendance.project_id) ?? null
+      : null;
+
     if (editingAttendance) {
       setForm({
         work_date: editingAttendance.work_date,
+        project_code: editingProject?.project_code ?? editingAttendance.project_code,
         project_id: editingAttendance.project_id,
         task_id: editingAttendance.task_id,
         worker_count: editingAttendance.worker_count,
@@ -60,29 +68,40 @@ export default function AttendanceForm({
 
     setForm({
       work_date: '',
+      project_code: '',
       project_id: '',
       task_id: '',
       worker_count: 1,
       overtime_worker_count: 0,
       note: '',
     });
-  }, [editingAttendance]);
+  }, [editingAttendance, projects]);
 
-  const selectedProject = useMemo(() => {
-    return projects.find((project) => project.id === form.project_id) ?? null;
-  }, [projects, form.project_id]);
+  const projectCodeOptions = useMemo(() => {
+    return Array.from(new Set(projects.map((project) => project.project_code))).sort(
+      (left, right) => left.localeCompare(right)
+    );
+  }, [projects]);
+
+  const customerOptions = useMemo(() => {
+    return projects.filter((project) => project.project_code === form.project_code);
+  }, [projects, form.project_code]);
 
   const filteredTasks = useMemo(() => {
-    return tasks.filter((task) => task.project_id === form.project_id);
-  }, [tasks, form.project_id]);
+    return tasks.filter((task) => task.project_code === form.project_code);
+  }, [tasks, form.project_code]);
 
   function validateForm() {
     if (!form.work_date) {
       alert('Vui lòng chọn ngày làm');
       return false;
     }
-    if (!form.project_id) {
+    if (!form.project_code) {
       alert('Vui lòng chọn mã dự án');
+      return false;
+    }
+    if (!form.project_id) {
+      alert('Vui lòng chọn khách hàng');
       return false;
     }
     if (!form.task_id) {
@@ -103,7 +122,7 @@ export default function AttendanceForm({
     }
 
     const selectedTask = tasks.find((task) => task.id === form.task_id);
-    if (!selectedTask || selectedTask.project_id !== form.project_id) {
+    if (!selectedTask || selectedTask.project_code !== form.project_code) {
       alert('Hạng mục không thuộc mã dự án đã chọn');
       return false;
     }
@@ -173,29 +192,37 @@ export default function AttendanceForm({
 
       <select
         className="border p-2 w-full"
-        value={form.project_id}
+        value={form.project_code}
         onChange={(e) =>
           setForm({
             ...form,
-            project_id: e.target.value,
+            project_code: e.target.value,
+            project_id: '',
             task_id: '',
           })
         }
       >
         <option value="">Chọn mã dự án</option>
-        {projects.map((project) => (
-          <option key={project.id} value={project.id}>
-            {project.project_code}
+        {projectCodeOptions.map((projectCode) => (
+          <option key={projectCode} value={projectCode}>
+            {projectCode}
           </option>
         ))}
       </select>
 
-      <input
-        readOnly
-        value={selectedProject?.project_name ?? ''}
-        placeholder="Khách hàng"
-        className="border p-2 w-full bg-slate-50"
-      />
+      <select
+        className="border p-2 w-full"
+        value={form.project_id}
+        onChange={(e) => setForm({ ...form, project_id: e.target.value })}
+        disabled={!form.project_code}
+      >
+        <option value="">Chọn khách hàng</option>
+        {customerOptions.map((project) => (
+          <option key={project.id} value={project.id}>
+            {project.project_name}
+          </option>
+        ))}
+      </select>
 
       <select
         className="border p-2 w-full"

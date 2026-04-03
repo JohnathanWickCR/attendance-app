@@ -58,11 +58,16 @@ export default async function AttendancePage(props: { searchParams: SearchParams
     project_name: project.project_name,
   }));
 
-  const taskOptions: AttendanceTaskOption[] = (tasks || []).map((task) => ({
-    id: task.id,
-    project_id: task.project_id,
-    task_name: task.task_name,
-  }));
+  const taskOptions: AttendanceTaskOption[] = (tasks || []).map((task) => {
+    const project = projectOptions.find((project) => project.id === task.project_id);
+
+    return {
+      id: task.id,
+      project_id: task.project_id,
+      project_code: project?.project_code ?? '',
+      task_name: task.task_name,
+    };
+  });
 
   const attendanceRows: AttendanceRow[] = (rows || []).map((row) => {
     const project = Array.isArray(row.projects) ? row.projects[0] : row.projects;
@@ -90,6 +95,7 @@ export default async function AttendancePage(props: { searchParams: SearchParams
       editingAttendance = {
         id: found.id,
         work_date: found.work_date,
+        project_code: found.project_code,
         project_id: found.project_id,
         task_id: found.task_id,
         worker_count: found.worker_count,
