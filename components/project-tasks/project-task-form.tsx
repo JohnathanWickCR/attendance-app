@@ -62,6 +62,31 @@ export default function ProjectTaskForm({ projects, editingTask }: Props) {
     return projects.filter((project) => project.project_code === form.project_code);
   }, [projects, form.project_code]);
 
+  useEffect(() => {
+    if (!form.project_code) {
+      if (form.project_id) {
+        setForm((currentForm) => ({
+          ...currentForm,
+          project_id: '',
+        }));
+      }
+      return;
+    }
+
+    const currentProjectStillMatches = customerOptions.some(
+      (project) => project.id === form.project_id
+    );
+
+    if (currentProjectStillMatches) {
+      return;
+    }
+
+    setForm((currentForm) => ({
+      ...currentForm,
+      project_id: customerOptions[0]?.id ?? '',
+    }));
+  }, [customerOptions, form.project_code, form.project_id]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -115,7 +140,6 @@ export default function ProjectTaskForm({ projects, editingTask }: Props) {
           setForm({
             ...form,
             project_code: e.target.value,
-            project_id: '',
           })
         }
       >
@@ -123,20 +147,6 @@ export default function ProjectTaskForm({ projects, editingTask }: Props) {
         {projectCodeOptions.map((projectCode) => (
           <option key={projectCode} value={projectCode}>
             {projectCode}
-          </option>
-        ))}
-      </select>
-
-      <select
-        className="border p-2 w-full"
-        value={form.project_id}
-        onChange={(e) => setForm({ ...form, project_id: e.target.value })}
-        disabled={!form.project_code}
-      >
-        <option value="">Chọn khách hàng</option>
-        {customerOptions.map((project) => (
-          <option key={project.id} value={project.id}>
-            {project.project_name}
           </option>
         ))}
       </select>
