@@ -4,11 +4,10 @@ import { createClient } from '@/lib/supabase/server';
 
 const attendanceSchema = z.object({
   work_date: z.string().min(1, 'Ngày làm là bắt buộc'),
-  worker_id: z.string().uuid('worker_id không hợp lệ'),
   project_id: z.string().uuid('project_id không hợp lệ'),
   task_id: z.string().uuid('task_id không hợp lệ'),
-  regular_hours: z.number().min(0, 'Giờ làm phải >= 0'),
-  overtime_hours: z.number().min(0, 'Giờ tăng ca phải >= 0'),
+  worker_count: z.number().min(0, 'Số công nhân phải >= 0'),
+  overtime_worker_count: z.number().min(0, 'Số công nhân tăng ca phải >= 0'),
   note: z.string().optional(),
 });
 
@@ -22,11 +21,11 @@ export async function POST(request: Request) {
       .from('attendance_entries')
       .insert({
         work_date: parsed.work_date,
-        worker_id: parsed.worker_id,
+        worker_id: null,
         project_id: parsed.project_id,
         task_id: parsed.task_id,
-        regular_hours: parsed.regular_hours,
-        overtime_hours: parsed.overtime_hours,
+        regular_hours: parsed.worker_count,
+        overtime_hours: parsed.overtime_worker_count,
         note: parsed.note || null,
       })
       .select()
@@ -68,7 +67,7 @@ export async function DELETE(request: Request) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Lỗi hệ thống' }, { status: 500 });
   }
 }
@@ -79,11 +78,10 @@ export async function PATCH(request: Request) {
     const attendanceSchema = z.object({
       id: z.string().uuid('id không hợp lệ'),
       work_date: z.string().min(1, 'Ngày làm là bắt buộc'),
-      worker_id: z.string().uuid('worker_id không hợp lệ'),
       project_id: z.string().uuid('project_id không hợp lệ'),
       task_id: z.string().uuid('task_id không hợp lệ'),
-      regular_hours: z.number().min(0, 'Giờ làm phải >= 0'),
-      overtime_hours: z.number().min(0, 'Giờ tăng ca phải >= 0'),
+      worker_count: z.number().min(0, 'Số công nhân phải >= 0'),
+      overtime_worker_count: z.number().min(0, 'Số công nhân tăng ca phải >= 0'),
       note: z.string().optional(),
     });
 
@@ -94,11 +92,11 @@ export async function PATCH(request: Request) {
       .from('attendance_entries')
       .update({
         work_date: parsed.work_date,
-        worker_id: parsed.worker_id,
+        worker_id: null,
         project_id: parsed.project_id,
         task_id: parsed.task_id,
-        regular_hours: parsed.regular_hours,
-        overtime_hours: parsed.overtime_hours,
+        regular_hours: parsed.worker_count,
+        overtime_hours: parsed.overtime_worker_count,
         note: parsed.note || null,
       })
       .eq('id', parsed.id)

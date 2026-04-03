@@ -3,23 +3,17 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
-type AttendanceRow = {
+export type AttendanceRow = {
   id: string;
   work_date: string;
-  regular_hours: number;
-  overtime_hours: number;
+  worker_count: number;
+  overtime_worker_count: number;
   note: string | null;
-  workers: {
-    worker_code: string;
-    full_name: string;
-  } | null;
-  projects: {
-    project_code: string;
-    project_name: string;
-  } | null;
-  project_tasks: {
-    task_name: string;
-  } | null;
+  project_id: string;
+  task_id: string;
+  project_code: string;
+  project_name: string;
+  task_name: string;
 };
 
 type Props = {
@@ -35,10 +29,8 @@ export default function AttendanceTable({ rows }: Props) {
     return rows.filter((row) => row.work_date === selectedDate);
   }, [rows, selectedDate]);
 
-  const totalHours = useMemo(() => {
-    return filteredRows.reduce((sum, row) => {
-      return sum + Number(row.regular_hours || 0) + Number(row.overtime_hours || 0);
-    }, 0);
+  const totalWorkers = useMemo(() => {
+    return filteredRows.reduce((sum, row) => sum + Number(row.worker_count || 0), 0);
   }, [filteredRows]);
 
   async function handleDelete(id: string) {
@@ -75,7 +67,7 @@ export default function AttendanceTable({ rows }: Props) {
         <div>
           <h2 className="font-semibold">Danh sách chấm công</h2>
           <p className="text-sm text-muted-foreground">
-            Tổng giờ hiển thị: <strong>{totalHours}</strong>
+            Tổng công nhân hiển thị: <strong>{totalWorkers}</strong>
           </p>
         </div>
 
@@ -94,56 +86,40 @@ export default function AttendanceTable({ rows }: Props) {
         <thead>
           <tr className="border-b bg-muted/50">
             <th className="px-4 py-2 text-left font-medium">Ngày</th>
-            <th className="px-4 py-2 text-left font-medium">Công nhân</th>
-            <th className="px-4 py-2 text-left font-medium">Dự án</th>
+            <th className="px-4 py-2 text-left font-medium">Mã dự án</th>
+            <th className="px-4 py-2 text-left font-medium">Khách hàng</th>
             <th className="px-4 py-2 text-left font-medium">Hạng mục</th>
-            <th className="px-4 py-2 text-left font-medium">Giờ làm</th>
-            <th className="px-4 py-2 text-left font-medium">Tăng ca</th>
+            <th className="px-4 py-2 text-left font-medium">Số công nhân</th>
+            <th className="px-4 py-2 text-left font-medium">Công nhân tăng ca</th>
             <th className="px-4 py-2 text-left font-medium">Ghi chú</th>
             <th className="px-4 py-2 text-left font-medium"></th>
           </tr>
         </thead>
 
         <tbody>
-          {filteredRows.map((r) => (
-            <tr key={r.id} className="border-b hover:bg-muted/30 transition">
-              <td className="px-4 py-2 align-middle">{r.work_date}</td>
-
-              <td className="px-4 py-2 align-middle">
-                {r.workers
-                  ? `${r.workers.worker_code} - ${r.workers.full_name}`
-                  : ''}
-              </td>
-
-              <td className="px-4 py-2 align-middle">
-                {r.projects
-                  ? `${r.projects.project_code} - ${r.projects.project_name}`
-                  : ''}
-              </td>
-
-              <td className="px-4 py-2 align-middle">
-                {r.project_tasks?.task_name || ''}
-              </td>
-
-              <td className="px-4 py-2 align-middle">{r.regular_hours}</td>
-              <td className="px-4 py-2 align-middle">{r.overtime_hours}</td>
-              <td className="px-4 py-2 align-middle">{r.note}</td>
-
+          {filteredRows.map((row) => (
+            <tr key={row.id} className="border-b hover:bg-muted/30 transition">
+              <td className="px-4 py-2 align-middle">{row.work_date}</td>
+              <td className="px-4 py-2 align-middle">{row.project_code}</td>
+              <td className="px-4 py-2 align-middle">{row.project_name}</td>
+              <td className="px-4 py-2 align-middle">{row.task_name}</td>
+              <td className="px-4 py-2 align-middle">{row.worker_count}</td>
+              <td className="px-4 py-2 align-middle">{row.overtime_worker_count}</td>
+              <td className="px-4 py-2 align-middle">{row.note}</td>
               <td className="px-4 py-2 align-middle space-x-2 whitespace-nowrap">
                 <Link
-                  href={`/attendance?edit=${r.id}`}
+                  href={`/attendance?edit=${row.id}`}
                   className="rounded bg-blue-600 px-3 py-1 text-white"
                 >
                   Sửa
                 </Link>
-
                 <button
                   type="button"
-                  onClick={() => handleDelete(r.id)}
-                  disabled={deletingId === r.id}
+                  onClick={() => handleDelete(row.id)}
+                  disabled={deletingId === row.id}
                   className="rounded bg-red-600 px-3 py-1 text-white disabled:opacity-50"
                 >
-                  {deletingId === r.id ? 'Đang xóa...' : 'Xóa'}
+                  {deletingId === row.id ? 'Đang xóa...' : 'Xóa'}
                 </button>
               </td>
             </tr>

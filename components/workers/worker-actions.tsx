@@ -3,7 +3,12 @@
 import { createClient } from '@/lib/supabase/client';
 import { useState } from 'react';
 
-export default function WorkerActions({ worker }: any) {
+type WorkerRecord = {
+  id: string;
+  full_name: string;
+};
+
+export default function WorkerActions({ worker }: { worker: WorkerRecord }) {
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
 
@@ -34,8 +39,9 @@ export default function WorkerActions({ worker }: any) {
 
       alert('Đã xóa thành công');
       window.location.reload();
-    } catch (err: any) {
-      alert('Có lỗi khi xóa: ' + (err?.message || 'Unknown error'));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      alert('Có lỗi khi xóa: ' + message);
     } finally {
       setLoading(false);
     }

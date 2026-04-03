@@ -1,6 +1,12 @@
 import { createClient } from '@/lib/supabase/server';
-import AttendanceForm from '@/components/attendance/attendance-form';
-import AttendanceTable from '@/components/attendance/attendance-table';
+import AttendanceForm, {
+  type AttendanceProjectOption,
+  type AttendanceTaskOption,
+  type EditingAttendance,
+} from '@/components/attendance/attendance-form';
+import AttendanceTable, {
+  type AttendanceRow,
+} from '@/components/attendance/attendance-table';
 import { PageContainer } from '@/components/ui/page-container';
 import { SectionCard } from '@/components/ui/section-card';
 
@@ -9,13 +15,6 @@ type SearchParams = Promise<{ edit?: string }>;
 export default async function AttendancePage(props: { searchParams: SearchParams }) {
   const searchParams = await props.searchParams;
   const supabase = await createClient();
-
-  const { data: workers, error: workersError } = await supabase
-    .from('workers')
-    .select('id, worker_code, full_name')
-    .order('created_at', { ascending: false });
-
-  if (workersError) throw new Error(workersError.message);
 
   const { data: projects, error: projectsError } = await supabase
     .from('projects')
@@ -39,13 +38,8 @@ export default async function AttendancePage(props: { searchParams: SearchParams
       regular_hours,
       overtime_hours,
       note,
-      worker_id,
       project_id,
       task_id,
-      workers (
-        worker_code,
-        full_name
-      ),
       projects (
         project_code,
         project_name
@@ -58,19 +52,48 @@ export default async function AttendancePage(props: { searchParams: SearchParams
 
   if (rowsError) throw new Error(rowsError.message);
 
-  let editingAttendance = null;
+  const projectOptions: AttendanceProjectOption[] = (projects || []).map((project) => ({
+    id: project.id,
+    project_code: project.project_code,
+    project_name: project.project_name,
+  }));
+
+  const taskOptions: AttendanceTaskOption[] = (tasks || []).map((task) => ({
+    id: task.id,
+    project_id: task.project_id,
+    task_name: task.task_name,
+  }));
+
+  const attendanceRows: AttendanceRow[] = (rows || []).map((row) => {
+    const project = Array.isArray(row.projects) ? row.projects[0] : row.projects;
+    const task = Array.isArray(row.project_tasks) ? row.project_tasks[0] : row.project_tasks;
+
+    return {
+      id: row.id,
+      work_date: row.work_date,
+      worker_count: Number(row.regular_hours || 0),
+      overtime_worker_count: Number(row.overtime_hours || 0),
+      note: row.note,
+      project_id: row.project_id,
+      task_id: row.task_id,
+      project_code: project?.project_code ?? '',
+      project_name: project?.project_name ?? '',
+      task_name: task?.task_name ?? '',
+    };
+  });
+
+  let editingAttendance: EditingAttendance | null = null;
 
   if (searchParams.edit) {
-    const found = (rows || []).find((row) => row.id === searchParams.edit);
+    const found = attendanceRows.find((row) => row.id === searchParams.edit);
     if (found) {
       editingAttendance = {
         id: found.id,
         work_date: found.work_date,
-        worker_id: found.worker_id,
         project_id: found.project_id,
         task_id: found.task_id,
-        regular_hours: Number(found.regular_hours || 0),
-        overtime_hours: Number(found.overtime_hours || 0),
+        worker_count: found.worker_count,
+        overtime_worker_count: found.overtime_worker_count,
         note: found.note || '',
       };
     }
@@ -84,15 +107,13 @@ export default async function AttendancePage(props: { searchParams: SearchParams
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <SectionCard
           title={editingAttendance ? 'Sửa chấm công' : 'Thêm chấm công'}
-          description="Nhập thông tin chấm công cho công nhân theo dự án và hạng mục."
+          description="Nhập số công nhân làm việc theo mã dự án, khách hàng và hạng mục."
           className="h-fit"
         >
           <AttendanceForm
-            workers={workers || []}
-            projects={projects || []}
-            tasks={tasks || []}
+            projects={projectOptions}
+            tasks={taskOptions}
             editingAttendance={editingAttendance}
-            onCancelEdit={undefined as never}
           />
         </SectionCard>
 
@@ -100,7 +121,7 @@ export default async function AttendancePage(props: { searchParams: SearchParams
           title="Danh sách chấm công"
           description="Xem, lọc và thao tác trên các bản ghi chấm công hiện có."
         >
-          <AttendanceTable rows={(rows as any[]) || []} />
+          <AttendanceTable rows={attendanceRows} />
         </SectionCard>
       </div>
     </PageContainer>

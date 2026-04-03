@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 
 const projectSchema = z.object({
   project_code: z.string().min(1, 'Mã dự án là bắt buộc'),
-  project_name: z.string().min(1, 'Tên dự án là bắt buộc'),
+  project_name: z.string().min(1, 'Tên khách hàng là bắt buộc'),
   description: z.string().optional(),
 });
 
@@ -37,6 +37,65 @@ export async function POST(request: Request) {
       );
     }
 
+    return NextResponse.json({ error: 'Lỗi hệ thống' }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json();
+    const parsed = projectSchema
+      .extend({
+        id: z.string().uuid('id không hợp lệ'),
+      })
+      .parse(body);
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+      .from('projects')
+      .update({
+        project_code: parsed.project_code,
+        project_name: parsed.project_name,
+        description: parsed.description || null,
+      })
+      .eq('id', parsed.id)
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: error.issues.map((issue) => issue.message).join(', ') },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({ error: 'Lỗi hệ thống' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { id } = await request.json();
+
+    if (!id) {
+      return NextResponse.json({ error: 'Thiếu id' }, { status: 400 });
+    }
+
+    const supabase = await createClient();
+    const { error } = await supabase.from('projects').delete().eq('id', id);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch {
     return NextResponse.json({ error: 'Lỗi hệ thống' }, { status: 500 });
   }
 }

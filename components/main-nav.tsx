@@ -1,7 +1,6 @@
 import Link from 'next/link';
 
 const links = [
-  { href: '/workers', label: 'Công nhân' },
   { href: '/projects', label: 'Dự án' },
   { href: '/project-tasks', label: 'Hạng mục' },
   { href: '/attendance', label: 'Chấm công' },

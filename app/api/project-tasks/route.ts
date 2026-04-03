@@ -40,3 +40,62 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Lỗi hệ thống' }, { status: 500 });
   }
 }
+
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json();
+    const parsed = taskSchema
+      .extend({
+        id: z.string().uuid('id không hợp lệ'),
+      })
+      .parse(body);
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+      .from('project_tasks')
+      .update({
+        project_id: parsed.project_id,
+        task_name: parsed.task_name,
+        description: parsed.description || null,
+      })
+      .eq('id', parsed.id)
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: error.issues.map((issue) => issue.message).join(', ') },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({ error: 'Lỗi hệ thống' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { id } = await request.json();
+
+    if (!id) {
+      return NextResponse.json({ error: 'Thiếu id' }, { status: 400 });
+    }
+
+    const supabase = await createClient();
+    const { error } = await supabase.from('project_tasks').delete().eq('id', id);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: 'Lỗi hệ thống' }, { status: 500 });
+  }
+}
