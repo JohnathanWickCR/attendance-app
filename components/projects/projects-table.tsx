@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export type ProjectRow = {
   id: string;
@@ -19,12 +19,6 @@ export default function ProjectsTable({ projects }: Props) {
   const [selectedProjectCode, setSelectedProjectCode] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
 
-  const projectCodeOptions = useMemo(() => {
-    return Array.from(new Set(projects.map((project) => project.project_code))).sort(
-      (left, right) => left.localeCompare(right)
-    );
-  }, [projects]);
-
   const yearOptions = useMemo(() => {
     return Array.from(
       new Set(
@@ -34,6 +28,26 @@ export default function ProjectsTable({ projects }: Props) {
       )
     ).sort((left, right) => right.localeCompare(left));
   }, [projects]);
+
+  const filteredProjectCodeOptions = useMemo(() => {
+    const projectsForSelectedYear = selectedYear
+      ? projects.filter((project) => (project.description?.trim() ?? '') === selectedYear)
+      : projects;
+
+    return Array.from(
+      new Set(projectsForSelectedYear.map((project) => project.project_code))
+    ).sort((left, right) => left.localeCompare(right));
+  }, [projects, selectedYear]);
+
+  useEffect(() => {
+    if (!selectedProjectCode) {
+      return;
+    }
+
+    if (!filteredProjectCodeOptions.includes(selectedProjectCode)) {
+      setSelectedProjectCode('');
+    }
+  }, [filteredProjectCodeOptions, selectedProjectCode]);
 
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
@@ -101,7 +115,7 @@ export default function ProjectsTable({ projects }: Props) {
             onChange={(e) => setSelectedProjectCode(e.target.value)}
           >
             <option value="">Tất cả mã dự án</option>
-            {projectCodeOptions.map((projectCode) => (
+            {filteredProjectCodeOptions.map((projectCode) => (
               <option key={projectCode} value={projectCode}>
                 {projectCode}
               </option>
