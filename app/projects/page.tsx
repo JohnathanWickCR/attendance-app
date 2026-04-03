@@ -25,6 +25,9 @@ export default async function ProjectsPage(props: { searchParams: SearchParams }
     project_name: project.project_name,
     description: project.description,
   }));
+  const projectCodeOptions = Array.from(
+    new Set(projects.map((project) => project.project_code))
+  ).sort((left, right) => left.localeCompare(right));
 
   let editingProject: EditingProject | null = null;
 
@@ -51,7 +54,10 @@ export default async function ProjectsPage(props: { searchParams: SearchParams }
           description="Tạo mới và cập nhật thông tin dự án."
           className="h-fit"
         >
-          <ProjectForm editingProject={editingProject} />
+          <ProjectForm
+            editingProject={editingProject}
+            projectCodeOptions={projectCodeOptions}
+          />
         </SectionCard>
 
         <SectionCard

@@ -11,9 +11,13 @@ export type EditingProject = {
 
 type Props = {
   editingProject: EditingProject | null;
+  projectCodeOptions: string[];
 };
 
-export default function ProjectForm({ editingProject }: Props) {
+export default function ProjectForm({
+  editingProject,
+  projectCodeOptions,
+}: Props) {
   const [form, setForm] = useState({
     project_code: '',
     project_name: '',
@@ -85,11 +89,17 @@ export default function ProjectForm({ editingProject }: Props) {
       </div>
 
       <input
+        list="project-code-options"
         placeholder="Mã dự án"
         className="border p-2 w-full"
         value={form.project_code}
         onChange={(e) => setForm({ ...form, project_code: e.target.value })}
       />
+      <datalist id="project-code-options">
+        {projectCodeOptions.map((projectCode) => (
+          <option key={projectCode} value={projectCode} />
+        ))}
+      </datalist>
 
       <input
         placeholder="Tên khách hàng"
