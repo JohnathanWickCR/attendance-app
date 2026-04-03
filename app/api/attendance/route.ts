@@ -11,17 +11,68 @@ const attendanceSchema = z.object({
   note: z.string().optional(),
 });
 
+async function resolveLegacyWorkerId() {
+  const supabase = await createClient();
+
+  const { data: existingWorker, error: existingWorkerError } = await supabase
+    .from('workers')
+    .select('id')
+    .eq('worker_code', 'AUTO_ATTENDANCE')
+    .maybeSingle();
+
+  if (existingWorkerError) {
+    throw new Error(existingWorkerError.message);
+  }
+
+  if (existingWorker) {
+    return existingWorker.id;
+  }
+
+  const { data: fallbackWorker, error: fallbackWorkerError } = await supabase
+    .from('workers')
+    .select('id')
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (fallbackWorkerError) {
+    throw new Error(fallbackWorkerError.message);
+  }
+
+  if (fallbackWorker) {
+    return fallbackWorker.id;
+  }
+
+  const { data: createdWorker, error: createWorkerError } = await supabase
+    .from('workers')
+    .insert({
+      worker_code: 'AUTO_ATTENDANCE',
+      full_name: 'Tự động chấm công',
+      team_name: 'Hệ thống',
+      overtime_multiplier: 1,
+    })
+    .select('id')
+    .single();
+
+  if (createWorkerError) {
+    throw new Error(createWorkerError.message);
+  }
+
+  return createdWorker.id;
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const parsed = attendanceSchema.parse(body);
     const supabase = await createClient();
+    const workerId = await resolveLegacyWorkerId();
 
     const { data, error } = await supabase
       .from('attendance_entries')
       .insert({
         work_date: parsed.work_date,
-        worker_id: null,
+        worker_id: workerId,
         project_id: parsed.project_id,
         task_id: parsed.task_id,
         regular_hours: parsed.worker_count,
@@ -87,12 +138,13 @@ export async function PATCH(request: Request) {
 
     const parsed = attendanceSchema.parse(body);
     const supabase = await createClient();
+    const workerId = await resolveLegacyWorkerId();
 
     const { data, error } = await supabase
       .from('attendance_entries')
       .update({
         work_date: parsed.work_date,
-        worker_id: null,
+        worker_id: workerId,
         project_id: parsed.project_id,
         task_id: parsed.task_id,
         regular_hours: parsed.worker_count,
