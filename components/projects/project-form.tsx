@@ -102,14 +102,14 @@ export default function ProjectForm({
       </datalist>
 
       <input
-        placeholder="Tên khách hàng"
+        placeholder="Tên dự án"
         className="border p-2 w-full"
         value={form.project_name}
         onChange={(e) => setForm({ ...form, project_name: e.target.value })}
       />
 
-      <textarea
-        placeholder="Mô tả"
+      <input
+        placeholder="Năm thi công"
         className="border p-2 w-full"
         value={form.description}
         onChange={(e) => setForm({ ...form, description: e.target.value })}

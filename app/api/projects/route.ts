@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 
 const projectSchema = z.object({
   project_code: z.string().min(1, 'Mã dự án là bắt buộc'),
-  project_name: z.string().min(1, 'Tên khách hàng là bắt buộc'),
+  project_name: z.string().min(1, 'Tên dự án là bắt buộc'),
   description: z.string().optional(),
 });
 
@@ -30,7 +30,7 @@ async function ensureUniqueProjectName(
   }
 
   if (data) {
-    throw new Error('Tên khách hàng đã tồn tại');
+    throw new Error('Tên dự án đã tồn tại');
   }
 }
 

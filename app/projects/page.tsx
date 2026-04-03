@@ -46,7 +46,7 @@ export default async function ProjectsPage(props: { searchParams: SearchParams }
   return (
     <PageContainer
       title="Dự án"
-      description="Quản lý mã dự án, khách hàng và thông tin liên quan."
+      description="Quản lý mã dự án, tên dự án và năm thi công."
     >
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <SectionCard
@@ -62,7 +62,7 @@ export default async function ProjectsPage(props: { searchParams: SearchParams }
 
         <SectionCard
           title="Danh sách dự án"
-          description="Xem và quản lý các dự án hiện có."
+          description="Xem và quản lý các dự án theo mã dự án và năm thi công."
         >
           <ProjectsTable projects={projects} />
         </SectionCard>

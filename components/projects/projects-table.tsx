@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 export type ProjectRow = {
   id: string;
@@ -16,6 +16,35 @@ type Props = {
 
 export default function ProjectsTable({ projects }: Props) {
   const [deletingId, setDeletingId] = useState('');
+  const [selectedProjectCode, setSelectedProjectCode] = useState('');
+  const [selectedYear, setSelectedYear] = useState('');
+
+  const projectCodeOptions = useMemo(() => {
+    return Array.from(new Set(projects.map((project) => project.project_code))).sort(
+      (left, right) => left.localeCompare(right)
+    );
+  }, [projects]);
+
+  const yearOptions = useMemo(() => {
+    return Array.from(
+      new Set(
+        projects
+          .map((project) => project.description?.trim() ?? '')
+          .filter((year) => year.length > 0)
+      )
+    ).sort((left, right) => right.localeCompare(left));
+  }, [projects]);
+
+  const filteredProjects = useMemo(() => {
+    return projects.filter((project) => {
+      const matchesProjectCode =
+        !selectedProjectCode || project.project_code === selectedProjectCode;
+      const matchesYear =
+        !selectedYear || (project.description?.trim() ?? '') === selectedYear;
+
+      return matchesProjectCode && matchesYear;
+    });
+  }, [projects, selectedProjectCode, selectedYear]);
 
   async function handleDelete(id: string) {
     const confirmed = window.confirm('Bạn có chắc muốn xóa dự án này không?');
@@ -46,23 +75,57 @@ export default function ProjectsTable({ projects }: Props) {
   }
 
   return (
-    <div>
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div>
+          <label className="mb-1 block text-sm font-medium">Lọc theo mã dự án</label>
+          <select
+            className="w-full rounded border px-3 py-2"
+            value={selectedProjectCode}
+            onChange={(e) => setSelectedProjectCode(e.target.value)}
+          >
+            <option value="">Tất cả mã dự án</option>
+            {projectCodeOptions.map((projectCode) => (
+              <option key={projectCode} value={projectCode}>
+                {projectCode}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium">Lọc theo năm thi công</label>
+          <select
+            className="w-full rounded border px-3 py-2"
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+          >
+            <option value="">Tất cả năm</option>
+            {yearOptions.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <table className="w-full text-sm border-collapse">
         <thead>
           <tr className="border-b bg-muted/50">
-            <th className="px-4 py-2 text-left font-medium">Mã</th>
-            <th className="px-4 py-2 text-left font-medium">Khách hàng</th>
-            <th className="px-4 py-2 text-left font-medium">Mô tả</th>
+            <th className="px-4 py-2 text-left font-medium">Năm</th>
+            <th className="px-4 py-2 text-left font-medium">Mã dự án</th>
+            <th className="px-4 py-2 text-left font-medium">Tên dự án</th>
             <th className="px-4 py-2 text-left font-medium">Hành động</th>
           </tr>
         </thead>
 
         <tbody>
-          {projects.map((project) => (
+          {filteredProjects.map((project) => (
             <tr key={project.id} className="border-b hover:bg-muted/30 transition">
+              <td className="px-4 py-2 align-middle">{project.description}</td>
               <td className="px-4 py-2 align-middle">{project.project_code}</td>
               <td className="px-4 py-2 align-middle">{project.project_name}</td>
-              <td className="px-4 py-2 align-middle">{project.description}</td>
               <td className="px-4 py-2 align-middle whitespace-nowrap space-x-2">
                 <Link
                   href={`/projects?edit=${project.id}`}
@@ -82,10 +145,10 @@ export default function ProjectsTable({ projects }: Props) {
             </tr>
           ))}
 
-          {projects.length === 0 ? (
+          {filteredProjects.length === 0 ? (
             <tr>
               <td colSpan={4} className="px-4 py-4 text-center text-muted-foreground">
-                Chưa có dự án nào.
+                Không có dự án phù hợp bộ lọc.
               </td>
             </tr>
           ) : null}
