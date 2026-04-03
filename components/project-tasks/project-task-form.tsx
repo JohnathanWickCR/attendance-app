@@ -22,6 +22,7 @@ type Props = {
 
 export default function ProjectTaskForm({ projects, editingTask }: Props) {
   const [form, setForm] = useState({
+    project_code: '',
     project_id: '',
     task_name: '',
     description: '',
@@ -29,8 +30,13 @@ export default function ProjectTaskForm({ projects, editingTask }: Props) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const editingProject = editingTask
+      ? projects.find((project) => project.id === editingTask.project_id) ?? null
+      : null;
+
     if (editingTask) {
       setForm({
+        project_code: editingProject?.project_code ?? '',
         project_id: editingTask.project_id,
         task_name: editingTask.task_name,
         description: editingTask.description,
@@ -39,15 +45,22 @@ export default function ProjectTaskForm({ projects, editingTask }: Props) {
     }
 
     setForm({
+      project_code: '',
       project_id: '',
       task_name: '',
       description: '',
     });
-  }, [editingTask]);
+  }, [editingTask, projects]);
 
-  const selectedProject = useMemo(() => {
-    return projects.find((project) => project.id === form.project_id) ?? null;
-  }, [projects, form.project_id]);
+  const projectCodeOptions = useMemo(() => {
+    return Array.from(new Set(projects.map((project) => project.project_code))).sort(
+      (left, right) => left.localeCompare(right)
+    );
+  }, [projects]);
+
+  const customerOptions = useMemo(() => {
+    return projects.filter((project) => project.project_code === form.project_code);
+  }, [projects, form.project_code]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -97,23 +110,36 @@ export default function ProjectTaskForm({ projects, editingTask }: Props) {
 
       <select
         className="border p-2 w-full"
-        value={form.project_id}
-        onChange={(e) => setForm({ ...form, project_id: e.target.value })}
+        value={form.project_code}
+        onChange={(e) =>
+          setForm({
+            ...form,
+            project_code: e.target.value,
+            project_id: '',
+          })
+        }
       >
         <option value="">Chọn mã dự án</option>
-        {projects.map((project) => (
-          <option key={project.id} value={project.id}>
-            {project.project_code}
+        {projectCodeOptions.map((projectCode) => (
+          <option key={projectCode} value={projectCode}>
+            {projectCode}
           </option>
         ))}
       </select>
 
-      <input
-        readOnly
-        value={selectedProject?.project_name ?? ''}
-        placeholder="Khách hàng"
-        className="border p-2 w-full bg-slate-50"
-      />
+      <select
+        className="border p-2 w-full"
+        value={form.project_id}
+        onChange={(e) => setForm({ ...form, project_id: e.target.value })}
+        disabled={!form.project_code}
+      >
+        <option value="">Chọn khách hàng</option>
+        {customerOptions.map((project) => (
+          <option key={project.id} value={project.id}>
+            {project.project_name}
+          </option>
+        ))}
+      </select>
 
       <input
         placeholder="Tên hạng mục"
