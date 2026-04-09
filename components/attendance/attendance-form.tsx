@@ -83,7 +83,7 @@ export default function AttendanceForm({
     );
   }, [projects]);
 
-  const customerOptions = useMemo(() => {
+  const projectOptions = useMemo(() => {
     return projects.filter((project) => project.project_code === form.project_code);
   }, [projects, form.project_code]);
 
@@ -101,7 +101,7 @@ export default function AttendanceForm({
       return false;
     }
     if (!form.project_id) {
-      alert('Vui lòng chọn khách hàng');
+      alert('Vui lòng chọn dự án');
       return false;
     }
     if (!form.task_id) {
@@ -216,8 +216,8 @@ export default function AttendanceForm({
         onChange={(e) => setForm({ ...form, project_id: e.target.value })}
         disabled={!form.project_code}
       >
-        <option value="">Chọn khách hàng</option>
-        {customerOptions.map((project) => (
+        <option value="">Chọn dự án</option>
+        {projectOptions.map((project) => (
           <option key={project.id} value={project.id}>
             {project.project_name}
           </option>
@@ -237,27 +237,33 @@ export default function AttendanceForm({
         ))}
       </select>
 
-      <input
-        type="number"
-        min="0"
-        className="border p-2 w-full"
-        placeholder="Số công nhân làm việc"
-        value={form.worker_count}
-        onChange={(e) =>
-          setForm({ ...form, worker_count: Number(e.target.value) })
-        }
-      />
+      <div className="space-y-1">
+        <label className="block text-sm font-medium">Số công nhân</label>
+        <input
+          type="number"
+          min="0"
+          className="border p-2 w-full"
+          placeholder="Số công nhân làm việc"
+          value={form.worker_count}
+          onChange={(e) =>
+            setForm({ ...form, worker_count: Number(e.target.value) })
+          }
+        />
+      </div>
 
-      <input
-        type="number"
-        min="0"
-        className="border p-2 w-full"
-        placeholder="Số công nhân tăng ca"
-        value={form.overtime_worker_count}
-        onChange={(e) =>
-          setForm({ ...form, overtime_worker_count: Number(e.target.value) })
-        }
-      />
+      <div className="space-y-1">
+        <label className="block text-sm font-medium">Số công nhân tăng ca</label>
+        <input
+          type="number"
+          min="0"
+          className="border p-2 w-full"
+          placeholder="Số công nhân tăng ca"
+          value={form.overtime_worker_count}
+          onChange={(e) =>
+            setForm({ ...form, overtime_worker_count: Number(e.target.value) })
+          }
+        />
+      </div>
 
       <textarea
         className="border p-2 w-full"

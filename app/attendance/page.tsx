@@ -113,7 +113,7 @@ export default async function AttendancePage(props: { searchParams: SearchParams
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <SectionCard
           title={editingAttendance ? 'Sửa chấm công' : 'Thêm chấm công'}
-          description="Nhập số công nhân làm việc theo mã dự án, khách hàng và hạng mục."
+          description="Nhập số công nhân làm việc theo mã dự án, tên dự án và hạng mục."
           className="h-fit"
         >
           <AttendanceForm

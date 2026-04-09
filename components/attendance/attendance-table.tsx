@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export type AttendanceRow = {
   id: string;
@@ -21,13 +21,212 @@ type Props = {
 };
 
 export default function AttendanceTable({ rows }: Props) {
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedYear, setSelectedYear] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState('');
+  const [selectedDay, setSelectedDay] = useState('');
+  const [selectedProjectCode, setSelectedProjectCode] = useState('');
+  const [selectedProjectName, setSelectedProjectName] = useState('');
+  const [selectedTaskName, setSelectedTaskName] = useState('');
   const [deletingId, setDeletingId] = useState('');
 
+  const rowsWithDateParts = useMemo(() => {
+    return rows.map((row) => {
+      const [year = '', month = '', day = ''] = row.work_date.split('-');
+
+      return {
+        ...row,
+        year,
+        month,
+        day,
+      };
+    });
+  }, [rows]);
+
+  const yearOptions = useMemo(() => {
+    return Array.from(new Set(rowsWithDateParts.map((row) => row.year))).sort(
+      (left, right) => right.localeCompare(left)
+    );
+  }, [rowsWithDateParts]);
+
+  const filteredMonthOptions = useMemo(() => {
+    const rowsForSelectedYear = selectedYear
+      ? rowsWithDateParts.filter((row) => row.year === selectedYear)
+      : rowsWithDateParts;
+
+    return Array.from(new Set(rowsForSelectedYear.map((row) => row.month))).sort(
+      (left, right) => left.localeCompare(right)
+    );
+  }, [rowsWithDateParts, selectedYear]);
+
+  const filteredDayOptions = useMemo(() => {
+    const rowsForSelectedYearAndMonth = rowsWithDateParts.filter((row) => {
+      const matchesYear = !selectedYear || row.year === selectedYear;
+      const matchesMonth = !selectedMonth || row.month === selectedMonth;
+
+      return matchesYear && matchesMonth;
+    });
+
+    return Array.from(new Set(rowsForSelectedYearAndMonth.map((row) => row.day))).sort(
+      (left, right) => left.localeCompare(right)
+    );
+  }, [rowsWithDateParts, selectedYear, selectedMonth]);
+
+  const filteredProjectCodeOptions = useMemo(() => {
+    const matchingRows = rowsWithDateParts.filter((row) => {
+      const matchesYear = !selectedYear || row.year === selectedYear;
+      const matchesMonth = !selectedMonth || row.month === selectedMonth;
+      const matchesDay = !selectedDay || row.day === selectedDay;
+      const matchesProjectName =
+        !selectedProjectName || row.project_name === selectedProjectName;
+      const matchesTaskName = !selectedTaskName || row.task_name === selectedTaskName;
+
+      return (
+        matchesYear &&
+        matchesMonth &&
+        matchesDay &&
+        matchesProjectName &&
+        matchesTaskName
+      );
+    });
+
+    return Array.from(new Set(matchingRows.map((row) => row.project_code))).sort(
+      (left, right) => left.localeCompare(right)
+    );
+  }, [
+    rowsWithDateParts,
+    selectedYear,
+    selectedMonth,
+    selectedDay,
+    selectedProjectName,
+    selectedTaskName,
+  ]);
+
+  const filteredProjectNameOptions = useMemo(() => {
+    const matchingRows = rowsWithDateParts.filter((row) => {
+      const matchesYear = !selectedYear || row.year === selectedYear;
+      const matchesMonth = !selectedMonth || row.month === selectedMonth;
+      const matchesDay = !selectedDay || row.day === selectedDay;
+      const matchesProjectCode =
+        !selectedProjectCode || row.project_code === selectedProjectCode;
+      const matchesTaskName = !selectedTaskName || row.task_name === selectedTaskName;
+
+      return (
+        matchesYear &&
+        matchesMonth &&
+        matchesDay &&
+        matchesProjectCode &&
+        matchesTaskName
+      );
+    });
+
+    return Array.from(new Set(matchingRows.map((row) => row.project_name))).sort(
+      (left, right) => left.localeCompare(right)
+    );
+  }, [
+    rowsWithDateParts,
+    selectedYear,
+    selectedMonth,
+    selectedDay,
+    selectedProjectCode,
+    selectedTaskName,
+  ]);
+
+  const filteredTaskOptions = useMemo(() => {
+    const matchingRows = rowsWithDateParts.filter((row) => {
+      const matchesYear = !selectedYear || row.year === selectedYear;
+      const matchesMonth = !selectedMonth || row.month === selectedMonth;
+      const matchesDay = !selectedDay || row.day === selectedDay;
+      const matchesProjectCode =
+        !selectedProjectCode || row.project_code === selectedProjectCode;
+      const matchesProjectName =
+        !selectedProjectName || row.project_name === selectedProjectName;
+
+      return (
+        matchesYear &&
+        matchesMonth &&
+        matchesDay &&
+        matchesProjectCode &&
+        matchesProjectName
+      );
+    });
+
+    return Array.from(new Set(matchingRows.map((row) => row.task_name))).sort(
+      (left, right) => left.localeCompare(right)
+    );
+  }, [
+    rowsWithDateParts,
+    selectedYear,
+    selectedMonth,
+    selectedDay,
+    selectedProjectCode,
+    selectedProjectName,
+  ]);
+
+  useEffect(() => {
+    if (selectedYear && !yearOptions.includes(selectedYear)) {
+      setSelectedYear('');
+    }
+  }, [selectedYear, yearOptions]);
+
+  useEffect(() => {
+    if (selectedMonth && !filteredMonthOptions.includes(selectedMonth)) {
+      setSelectedMonth('');
+    }
+  }, [selectedMonth, filteredMonthOptions]);
+
+  useEffect(() => {
+    if (selectedDay && !filteredDayOptions.includes(selectedDay)) {
+      setSelectedDay('');
+    }
+  }, [selectedDay, filteredDayOptions]);
+
+  useEffect(() => {
+    if (selectedProjectCode && !filteredProjectCodeOptions.includes(selectedProjectCode)) {
+      setSelectedProjectCode('');
+    }
+  }, [selectedProjectCode, filteredProjectCodeOptions]);
+
+  useEffect(() => {
+    if (selectedProjectName && !filteredProjectNameOptions.includes(selectedProjectName)) {
+      setSelectedProjectName('');
+    }
+  }, [selectedProjectName, filteredProjectNameOptions]);
+
+  useEffect(() => {
+    if (selectedTaskName && !filteredTaskOptions.includes(selectedTaskName)) {
+      setSelectedTaskName('');
+    }
+  }, [selectedTaskName, filteredTaskOptions]);
+
   const filteredRows = useMemo(() => {
-    if (!selectedDate) return rows;
-    return rows.filter((row) => row.work_date === selectedDate);
-  }, [rows, selectedDate]);
+    return rowsWithDateParts.filter((row) => {
+      const matchesYear = !selectedYear || row.year === selectedYear;
+      const matchesMonth = !selectedMonth || row.month === selectedMonth;
+      const matchesDay = !selectedDay || row.day === selectedDay;
+      const matchesProjectCode =
+        !selectedProjectCode || row.project_code === selectedProjectCode;
+      const matchesProjectName =
+        !selectedProjectName || row.project_name === selectedProjectName;
+      const matchesTaskName = !selectedTaskName || row.task_name === selectedTaskName;
+
+      return (
+        matchesYear &&
+        matchesMonth &&
+        matchesDay &&
+        matchesProjectCode &&
+        matchesProjectName &&
+        matchesTaskName
+      );
+    });
+  }, [
+    rowsWithDateParts,
+    selectedYear,
+    selectedMonth,
+    selectedDay,
+    selectedProjectCode,
+    selectedProjectName,
+    selectedTaskName,
+  ]);
 
   const totalWorkers = useMemo(() => {
     return filteredRows.reduce((sum, row) => sum + Number(row.worker_count || 0), 0);
@@ -70,15 +269,103 @@ export default function AttendanceTable({ rows }: Props) {
             Tổng công nhân hiển thị: <strong>{totalWorkers}</strong>
           </p>
         </div>
+      </div>
 
-        <div className="min-w-[220px]">
-          <label className="mb-1 block text-sm font-medium">Lọc theo ngày</label>
-          <input
-            type="date"
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div>
+          <label className="mb-1 block text-sm font-medium">Lọc theo năm</label>
+          <select
             className="w-full rounded border px-3 py-2"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-          />
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+          >
+            <option value="">Tất cả năm</option>
+            {yearOptions.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium">Lọc theo tháng</label>
+          <select
+            className="w-full rounded border px-3 py-2"
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+          >
+            <option value="">Tất cả tháng</option>
+            {filteredMonthOptions.map((month) => (
+              <option key={month} value={month}>
+                {month}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium">Lọc theo ngày</label>
+          <select
+            className="w-full rounded border px-3 py-2"
+            value={selectedDay}
+            onChange={(e) => setSelectedDay(e.target.value)}
+          >
+            <option value="">Tất cả ngày</option>
+            {filteredDayOptions.map((day) => (
+              <option key={day} value={day}>
+                {day}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium">Lọc theo mã dự án</label>
+          <select
+            className="w-full rounded border px-3 py-2"
+            value={selectedProjectCode}
+            onChange={(e) => setSelectedProjectCode(e.target.value)}
+          >
+            <option value="">Tất cả mã dự án</option>
+            {filteredProjectCodeOptions.map((projectCode) => (
+              <option key={projectCode} value={projectCode}>
+                {projectCode}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium">Lọc theo tên dự án</label>
+          <select
+            className="w-full rounded border px-3 py-2"
+            value={selectedProjectName}
+            onChange={(e) => setSelectedProjectName(e.target.value)}
+          >
+            <option value="">Tất cả tên dự án</option>
+            {filteredProjectNameOptions.map((projectName) => (
+              <option key={projectName} value={projectName}>
+                {projectName}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium">Lọc theo hạng mục</label>
+          <select
+            className="w-full rounded border px-3 py-2"
+            value={selectedTaskName}
+            onChange={(e) => setSelectedTaskName(e.target.value)}
+          >
+            <option value="">Tất cả hạng mục</option>
+            {filteredTaskOptions.map((taskName) => (
+              <option key={taskName} value={taskName}>
+                {taskName}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -87,7 +374,7 @@ export default function AttendanceTable({ rows }: Props) {
           <tr className="border-b bg-muted/50">
             <th className="px-4 py-2 text-left font-medium">Ngày</th>
             <th className="px-4 py-2 text-left font-medium">Mã dự án</th>
-            <th className="px-4 py-2 text-left font-medium">Khách hàng</th>
+            <th className="px-4 py-2 text-left font-medium">Tên dự án</th>
             <th className="px-4 py-2 text-left font-medium">Hạng mục</th>
             <th className="px-4 py-2 text-left font-medium">Số công nhân</th>
             <th className="px-4 py-2 text-left font-medium">Công nhân tăng ca</th>
@@ -128,7 +415,7 @@ export default function AttendanceTable({ rows }: Props) {
           {filteredRows.length === 0 ? (
             <tr>
               <td colSpan={8} className="px-4 py-4 text-center text-muted-foreground">
-                Không có dữ liệu chấm công cho ngày đã chọn.
+                Không có dữ liệu chấm công phù hợp bộ lọc.
               </td>
             </tr>
           ) : null}
