@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export type ProjectTaskRow = {
   id: string;
@@ -18,6 +18,59 @@ type Props = {
 
 export default function ProjectTasksTable({ tasks }: Props) {
   const [deletingId, setDeletingId] = useState('');
+  const [selectedProjectCode, setSelectedProjectCode] = useState('');
+  const [selectedProjectName, setSelectedProjectName] = useState('');
+
+  const filteredProjectCodeOptions = useMemo(() => {
+    const tasksForSelectedProjectName = selectedProjectName
+      ? tasks.filter((task) => task.project_name === selectedProjectName)
+      : tasks;
+
+    return Array.from(
+      new Set(tasksForSelectedProjectName.map((task) => task.project_code))
+    ).sort((left, right) => left.localeCompare(right));
+  }, [tasks, selectedProjectName]);
+
+  const filteredProjectNameOptions = useMemo(() => {
+    const tasksForSelectedProjectCode = selectedProjectCode
+      ? tasks.filter((task) => task.project_code === selectedProjectCode)
+      : tasks;
+
+    return Array.from(
+      new Set(tasksForSelectedProjectCode.map((task) => task.project_name))
+    ).sort((left, right) => left.localeCompare(right));
+  }, [tasks, selectedProjectCode]);
+
+  useEffect(() => {
+    if (!selectedProjectCode) {
+      return;
+    }
+
+    if (!filteredProjectCodeOptions.includes(selectedProjectCode)) {
+      setSelectedProjectCode('');
+    }
+  }, [filteredProjectCodeOptions, selectedProjectCode]);
+
+  useEffect(() => {
+    if (!selectedProjectName) {
+      return;
+    }
+
+    if (!filteredProjectNameOptions.includes(selectedProjectName)) {
+      setSelectedProjectName('');
+    }
+  }, [filteredProjectNameOptions, selectedProjectName]);
+
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      const matchesProjectCode =
+        !selectedProjectCode || task.project_code === selectedProjectCode;
+      const matchesProjectName =
+        !selectedProjectName || task.project_name === selectedProjectName;
+
+      return matchesProjectCode && matchesProjectName;
+    });
+  }, [tasks, selectedProjectCode, selectedProjectName]);
 
   async function handleDelete(id: string) {
     const confirmed = window.confirm('Bạn có chắc muốn xóa hạng mục này không?');
@@ -48,12 +101,46 @@ export default function ProjectTasksTable({ tasks }: Props) {
   }
 
   return (
-    <div>
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div>
+          <label className="mb-1 block text-sm font-medium">Lọc theo mã dự án</label>
+          <select
+            className="w-full rounded border px-3 py-2"
+            value={selectedProjectCode}
+            onChange={(e) => setSelectedProjectCode(e.target.value)}
+          >
+            <option value="">Tất cả mã dự án</option>
+            {filteredProjectCodeOptions.map((projectCode) => (
+              <option key={projectCode} value={projectCode}>
+                {projectCode}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium">Lọc theo tên dự án</label>
+          <select
+            className="w-full rounded border px-3 py-2"
+            value={selectedProjectName}
+            onChange={(e) => setSelectedProjectName(e.target.value)}
+          >
+            <option value="">Tất cả tên dự án</option>
+            {filteredProjectNameOptions.map((projectName) => (
+              <option key={projectName} value={projectName}>
+                {projectName}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <table className="w-full text-sm border-collapse">
         <thead>
           <tr className="border-b bg-muted/50">
             <th className="px-4 py-2 text-left font-medium">Mã dự án</th>
-            <th className="px-4 py-2 text-left font-medium">Khách hàng</th>
+            <th className="px-4 py-2 text-left font-medium">Tên dự án</th>
             <th className="px-4 py-2 text-left font-medium">Hạng mục</th>
             <th className="px-4 py-2 text-left font-medium">Mô tả</th>
             <th className="px-4 py-2 text-left font-medium">Hành động</th>
@@ -61,7 +148,7 @@ export default function ProjectTasksTable({ tasks }: Props) {
         </thead>
 
         <tbody>
-          {tasks.map((task) => (
+          {filteredTasks.map((task) => (
             <tr key={task.id} className="border-b hover:bg-muted/30 transition">
               <td className="px-4 py-2 align-middle">{task.project_code}</td>
               <td className="px-4 py-2 align-middle">{task.project_name}</td>
@@ -86,10 +173,10 @@ export default function ProjectTasksTable({ tasks }: Props) {
             </tr>
           ))}
 
-          {tasks.length === 0 ? (
+          {filteredTasks.length === 0 ? (
             <tr>
               <td colSpan={5} className="px-4 py-4 text-center text-muted-foreground">
-                Chưa có hạng mục nào.
+                Không có hạng mục phù hợp bộ lọc.
               </td>
             </tr>
           ) : null}
