@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 const links = [
   { href: '/projects', label: 'Dự án' },
@@ -8,6 +11,8 @@ const links = [
 ];
 
 export default function MainNav() {
+  const pathname = usePathname();
+
   return (
     <nav className="border-b bg-white">
       <div className="mx-auto flex max-w-7xl gap-4 p-4">
@@ -19,7 +24,9 @@ export default function MainNav() {
           <Link
             key={link.href}
             href={link.href}
-            className="rounded px-3 py-1 hover:bg-slate-100"
+            className={`rounded px-3 py-1 hover:bg-slate-100 ${
+              pathname === link.href ? 'font-bold text-slate-950' : 'text-slate-600'
+            }`}
           >
             {link.label}
           </Link>
