@@ -369,58 +369,120 @@ export default function AttendanceTable({ rows }: Props) {
         </div>
       </div>
 
-      <table className="w-full text-sm border-collapse">
-        <thead>
-          <tr className="border-b bg-muted/50">
-            <th className="px-4 py-2 text-left font-medium">Ngày</th>
-            <th className="px-4 py-2 text-left font-medium">Mã dự án</th>
-            <th className="px-4 py-2 text-left font-medium">Tên dự án</th>
-            <th className="px-4 py-2 text-left font-medium">Hạng mục</th>
-            <th className="px-4 py-2 text-left font-medium">Số công nhân</th>
-            <th className="px-4 py-2 text-left font-medium">Công nhân tăng ca</th>
-            <th className="px-4 py-2 text-left font-medium">Ghi chú</th>
-            <th className="px-4 py-2 text-left font-medium"></th>
-          </tr>
-        </thead>
+      <div className="space-y-3 md:hidden">
+        {filteredRows.map((row) => (
+          <div key={row.id} className="rounded-xl border p-4 shadow-sm">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p className="text-xs text-muted-foreground">Ngày</p>
+                <p className="font-medium">{row.work_date}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Mã dự án</p>
+                <p className="font-medium">{row.project_code}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Tên dự án</p>
+                <p className="font-medium">{row.project_name}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Hạng mục</p>
+                <p className="font-medium">{row.task_name}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Số công nhân</p>
+                <p className="font-medium">{row.worker_count}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Tăng ca</p>
+                <p className="font-medium">{row.overtime_worker_count}</p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-xs text-muted-foreground">Ghi chú</p>
+                <p className="font-medium">{row.note || '-'}</p>
+              </div>
+            </div>
 
-        <tbody>
-          {filteredRows.map((row) => (
-            <tr key={row.id} className="border-b hover:bg-muted/30 transition">
-              <td className="px-4 py-2 align-middle">{row.work_date}</td>
-              <td className="px-4 py-2 align-middle">{row.project_code}</td>
-              <td className="px-4 py-2 align-middle">{row.project_name}</td>
-              <td className="px-4 py-2 align-middle">{row.task_name}</td>
-              <td className="px-4 py-2 align-middle">{row.worker_count}</td>
-              <td className="px-4 py-2 align-middle">{row.overtime_worker_count}</td>
-              <td className="px-4 py-2 align-middle">{row.note}</td>
-              <td className="px-4 py-2 align-middle space-x-2 whitespace-nowrap">
-                <Link
-                  href={`/attendance?edit=${row.id}`}
-                  className="rounded bg-blue-600 px-3 py-1 text-white"
-                >
-                  Sửa
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(row.id)}
-                  disabled={deletingId === row.id}
-                  className="rounded bg-red-600 px-3 py-1 text-white disabled:opacity-50"
-                >
-                  {deletingId === row.id ? 'Đang xóa...' : 'Xóa'}
-                </button>
-              </td>
-            </tr>
-          ))}
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <Link
+                href={`/attendance?edit=${row.id}`}
+                className="rounded bg-blue-600 px-3 py-2 text-center text-sm text-white"
+              >
+                Sửa
+              </Link>
+              <button
+                type="button"
+                onClick={() => handleDelete(row.id)}
+                disabled={deletingId === row.id}
+                className="rounded bg-red-600 px-3 py-2 text-sm text-white disabled:opacity-50"
+              >
+                {deletingId === row.id ? 'Đang xóa...' : 'Xóa'}
+              </button>
+            </div>
+          </div>
+        ))}
 
-          {filteredRows.length === 0 ? (
-            <tr>
-              <td colSpan={8} className="px-4 py-4 text-center text-muted-foreground">
-                Không có dữ liệu chấm công phù hợp bộ lọc.
-              </td>
+        {filteredRows.length === 0 ? (
+          <div className="rounded-xl border px-4 py-6 text-center text-sm text-muted-foreground">
+            Không có dữ liệu chấm công phù hợp bộ lọc.
+          </div>
+        ) : null}
+      </div>
+
+      <div className="hidden overflow-x-auto md:block">
+        <table className="w-full min-w-[980px] border-collapse text-sm">
+          <thead>
+            <tr className="border-b bg-muted/50">
+              <th className="px-4 py-2 text-left font-medium">Ngày</th>
+              <th className="px-4 py-2 text-left font-medium">Mã dự án</th>
+              <th className="px-4 py-2 text-left font-medium">Tên dự án</th>
+              <th className="px-4 py-2 text-left font-medium">Hạng mục</th>
+              <th className="px-4 py-2 text-left font-medium">Số công nhân</th>
+              <th className="px-4 py-2 text-left font-medium">Công nhân tăng ca</th>
+              <th className="px-4 py-2 text-left font-medium">Ghi chú</th>
+              <th className="px-4 py-2 text-left font-medium"></th>
             </tr>
-          ) : null}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {filteredRows.map((row) => (
+              <tr key={row.id} className="border-b transition hover:bg-muted/30">
+                <td className="px-4 py-2 align-middle">{row.work_date}</td>
+                <td className="px-4 py-2 align-middle">{row.project_code}</td>
+                <td className="px-4 py-2 align-middle">{row.project_name}</td>
+                <td className="px-4 py-2 align-middle">{row.task_name}</td>
+                <td className="px-4 py-2 align-middle">{row.worker_count}</td>
+                <td className="px-4 py-2 align-middle">{row.overtime_worker_count}</td>
+                <td className="px-4 py-2 align-middle">{row.note}</td>
+                <td className="px-4 py-2 align-middle space-x-2 whitespace-nowrap">
+                  <Link
+                    href={`/attendance?edit=${row.id}`}
+                    className="rounded bg-blue-600 px-3 py-1 text-white"
+                  >
+                    Sửa
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(row.id)}
+                    disabled={deletingId === row.id}
+                    className="rounded bg-red-600 px-3 py-1 text-white disabled:opacity-50"
+                  >
+                    {deletingId === row.id ? 'Đang xóa...' : 'Xóa'}
+                  </button>
+                </td>
+              </tr>
+            ))}
+
+            {filteredRows.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="px-4 py-4 text-center text-muted-foreground">
+                  Không có dữ liệu chấm công phù hợp bộ lọc.
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

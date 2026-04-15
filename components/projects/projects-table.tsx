@@ -124,50 +124,96 @@ export default function ProjectsTable({ projects }: Props) {
         </div>
       </div>
 
-      <table className="w-full text-sm border-collapse">
-        <thead>
-          <tr className="border-b bg-muted/50">
-            <th className="px-4 py-2 text-left font-medium">Năm</th>
-            <th className="px-4 py-2 text-left font-medium">Mã dự án</th>
-            <th className="px-4 py-2 text-left font-medium">Tên dự án</th>
-            <th className="px-4 py-2 text-left font-medium">Hành động</th>
-          </tr>
-        </thead>
+      <div className="space-y-3 md:hidden">
+        {filteredProjects.map((project) => (
+          <div key={project.id} className="rounded-xl border p-4 shadow-sm">
+            <div className="grid grid-cols-1 gap-2 text-sm">
+              <div>
+                <p className="text-xs text-muted-foreground">Năm</p>
+                <p className="font-medium">{project.description || '-'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Mã dự án</p>
+                <p className="font-medium">{project.project_code}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Tên dự án</p>
+                <p className="font-medium">{project.project_name}</p>
+              </div>
+            </div>
 
-        <tbody>
-          {filteredProjects.map((project) => (
-            <tr key={project.id} className="border-b hover:bg-muted/30 transition">
-              <td className="px-4 py-2 align-middle">{project.description}</td>
-              <td className="px-4 py-2 align-middle">{project.project_code}</td>
-              <td className="px-4 py-2 align-middle">{project.project_name}</td>
-              <td className="px-4 py-2 align-middle whitespace-nowrap space-x-2">
-                <Link
-                  href={`/projects?edit=${project.id}`}
-                  className="rounded bg-blue-600 px-3 py-1 text-white"
-                >
-                  Sửa
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(project.id)}
-                  disabled={deletingId === project.id}
-                  className="rounded bg-red-600 px-3 py-1 text-white disabled:opacity-50"
-                >
-                  {deletingId === project.id ? 'Đang xóa...' : 'Xóa'}
-                </button>
-              </td>
-            </tr>
-          ))}
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <Link
+                href={`/projects?edit=${project.id}`}
+                className="rounded bg-blue-600 px-3 py-2 text-center text-sm text-white"
+              >
+                Sửa
+              </Link>
+              <button
+                type="button"
+                onClick={() => handleDelete(project.id)}
+                disabled={deletingId === project.id}
+                className="rounded bg-red-600 px-3 py-2 text-sm text-white disabled:opacity-50"
+              >
+                {deletingId === project.id ? 'Đang xóa...' : 'Xóa'}
+              </button>
+            </div>
+          </div>
+        ))}
 
-          {filteredProjects.length === 0 ? (
-            <tr>
-              <td colSpan={4} className="px-4 py-4 text-center text-muted-foreground">
-                Không có dự án phù hợp bộ lọc.
-              </td>
+        {filteredProjects.length === 0 ? (
+          <div className="rounded-xl border px-4 py-6 text-center text-sm text-muted-foreground">
+            Không có dự án phù hợp bộ lọc.
+          </div>
+        ) : null}
+      </div>
+
+      <div className="hidden overflow-x-auto md:block">
+        <table className="w-full min-w-[640px] border-collapse text-sm">
+          <thead>
+            <tr className="border-b bg-muted/50">
+              <th className="px-4 py-2 text-left font-medium">Năm</th>
+              <th className="px-4 py-2 text-left font-medium">Mã dự án</th>
+              <th className="px-4 py-2 text-left font-medium">Tên dự án</th>
+              <th className="px-4 py-2 text-left font-medium">Hành động</th>
             </tr>
-          ) : null}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {filteredProjects.map((project) => (
+              <tr key={project.id} className="border-b transition hover:bg-muted/30">
+                <td className="px-4 py-2 align-middle">{project.description}</td>
+                <td className="px-4 py-2 align-middle">{project.project_code}</td>
+                <td className="px-4 py-2 align-middle">{project.project_name}</td>
+                <td className="px-4 py-2 align-middle whitespace-nowrap space-x-2">
+                  <Link
+                    href={`/projects?edit=${project.id}`}
+                    className="rounded bg-blue-600 px-3 py-1 text-white"
+                  >
+                    Sửa
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(project.id)}
+                    disabled={deletingId === project.id}
+                    className="rounded bg-red-600 px-3 py-1 text-white disabled:opacity-50"
+                  >
+                    {deletingId === project.id ? 'Đang xóa...' : 'Xóa'}
+                  </button>
+                </td>
+              </tr>
+            ))}
+
+            {filteredProjects.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-4 py-4 text-center text-muted-foreground">
+                  Không có dự án phù hợp bộ lọc.
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
