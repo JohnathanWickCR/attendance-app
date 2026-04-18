@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import AttendanceForm, {
+  type AttendanceDuplicateCheckRow,
   type AttendanceProjectOption,
   type AttendanceTaskOption,
   type EditingAttendance,
@@ -87,6 +88,15 @@ export default async function AttendancePage(props: { searchParams: SearchParams
     };
   });
 
+  const existingAttendances: AttendanceDuplicateCheckRow[] = attendanceRows.map((row) => ({
+    id: row.id,
+    work_date: row.work_date,
+    project_id: row.project_id,
+    task_id: row.task_id,
+    project_code: row.project_code,
+    task_name: row.task_name,
+  }));
+
   let editingAttendance: EditingAttendance | null = null;
 
   if (searchParams.edit) {
@@ -120,6 +130,7 @@ export default async function AttendancePage(props: { searchParams: SearchParams
             projects={projectOptions}
             tasks={taskOptions}
             editingAttendance={editingAttendance}
+            existingAttendances={existingAttendances}
           />
         </SectionCard>
 

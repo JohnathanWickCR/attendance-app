@@ -26,16 +26,27 @@ export type EditingAttendance = {
   note: string | null;
 };
 
+export type AttendanceDuplicateCheckRow = {
+  id: string;
+  work_date: string;
+  project_id: string;
+  task_id: string;
+  project_code: string;
+  task_name: string;
+};
+
 type Props = {
   projects: AttendanceProjectOption[];
   tasks: AttendanceTaskOption[];
   editingAttendance: EditingAttendance | null;
+  existingAttendances: AttendanceDuplicateCheckRow[];
 };
 
 export default function AttendanceForm({
   projects,
   tasks,
   editingAttendance,
+  existingAttendances,
 }: Props) {
   const [form, setForm] = useState({
     work_date: '',
@@ -91,6 +102,26 @@ export default function AttendanceForm({
     return tasks.filter((task) => task.project_code === form.project_code);
   }, [tasks, form.project_code]);
 
+  const duplicateAttendanceMatches = useMemo(() => {
+    return existingAttendances.filter((attendance) => {
+      if (editingAttendance && attendance.id === editingAttendance.id) {
+        return false;
+      }
+
+      return (
+        attendance.work_date === form.work_date &&
+        attendance.project_id === form.project_id &&
+        attendance.task_id === form.task_id
+      );
+    });
+  }, [
+    editingAttendance,
+    existingAttendances,
+    form.project_id,
+    form.task_id,
+    form.work_date,
+  ]);
+
   function validateForm() {
     if (!form.work_date) {
       alert('Vui lòng chọn ngày làm');
@@ -133,6 +164,24 @@ export default function AttendanceForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validateForm()) return;
+
+    if (duplicateAttendanceMatches.length > 0) {
+      const duplicateSummary = duplicateAttendanceMatches
+        .slice(0, 3)
+        .map(
+          (attendance) =>
+            `${attendance.work_date} | ${attendance.project_code} | ${attendance.task_name}`
+        )
+        .join('\n');
+
+      const confirmed = window.confirm(
+        `Hạng mục này đã được chấm công cho dự án trong ngày đã chọn.\n\n${duplicateSummary}\n\nBạn có muốn tiếp tục chấm công không?`
+      );
+
+      if (!confirmed) {
+        return;
+      }
+    }
 
     try {
       setLoading(true);
@@ -236,6 +285,13 @@ export default function AttendanceForm({
           </option>
         ))}
       </select>
+
+      {duplicateAttendanceMatches.length > 0 ? (
+        <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          Hạng mục này đã được chấm công cho dự án trong ngày đã chọn. Khi bấm lưu,
+          hệ thống sẽ hỏi lại để người chấm tự quyết định có tiếp tục hay không.
+        </div>
+      ) : null}
 
       <div className="space-y-1">
         <label className="block text-sm font-medium">Số công nhân</label>
