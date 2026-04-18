@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
 const attendanceSchema = z.object({
@@ -100,25 +101,45 @@ export async function POST(request: Request) {
 }
 export async function DELETE(request: Request) {
   try {
-    const { id } = await request.json();
+    const body = await request.json();
+    const { id } = z
+      .object({
+        id: z.string().uuid('id không hợp lệ'),
+      })
+      .parse(body);
 
-    if (!id) {
-      return NextResponse.json({ error: 'Thiếu id' }, { status: 400 });
-    }
+    const supabase = createAdminClient() ?? (await createClient());
 
-    const supabase = await createClient();
-
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('attendance_entries')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
+    if (!data) {
+      return NextResponse.json(
+        {
+          error:
+            'Không xóa được chấm công. Kiểm tra DELETE policy của Supabase hoặc cấu hình SUPABASE_SERVICE_ROLE_KEY trên server.',
+        },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: error.issues.map((issue) => issue.message).join(', ') },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json({ error: 'Lỗi hệ thống' }, { status: 500 });
   }
 }
