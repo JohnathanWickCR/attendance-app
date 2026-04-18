@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import * as XLSX from 'xlsx';
 
 export type ProjectOption = {
   id: string;
@@ -28,6 +29,7 @@ export default function ProjectTaskForm({ projects, editingTask }: Props) {
     description: '',
   });
   const [loading, setLoading] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   useEffect(() => {
     const editingProject = editingTask
@@ -113,8 +115,119 @@ export default function ProjectTaskForm({ projects, editingTask }: Props) {
     }
   }
 
+  async function handleImportFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      setImporting(true);
+
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: 'array' });
+      const firstSheetName = workbook.SheetNames[0];
+
+      if (!firstSheetName) {
+        alert('File Excel không có sheet nào.');
+        return;
+      }
+
+      const sheet = workbook.Sheets[firstSheetName];
+      const rows = XLSX.utils.sheet_to_json<(string | number | null)[]>(sheet, {
+        header: 1,
+        blankrows: false,
+      });
+
+      if (rows.length < 2) {
+        alert('File Excel phải có ít nhất 1 dòng dữ liệu dưới hàng tiêu đề.');
+        return;
+      }
+
+      const dataRows = rows
+        .slice(1)
+        .map((row) => ({
+          project_code: String(row[0] ?? '').trim(),
+          task_name: String(row[1] ?? '').trim(),
+        }))
+        .filter((row) => row.project_code || row.task_name);
+
+      if (dataRows.length === 0) {
+        alert('Không tìm thấy dữ liệu hợp lệ trong file Excel.');
+        return;
+      }
+
+      const response = await fetch('/api/project-tasks/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows: dataRows }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        alert(result.error ?? 'Import thất bại.');
+        return;
+      }
+
+      const errorPreview =
+        Array.isArray(result.errors) && result.errors.length > 0
+          ? `\n\nCác dòng bỏ qua:\n${result.errors
+              .slice(0, 10)
+              .map(
+                (item: { rowNumber: number; reason: string }) =>
+                  `- Dòng ${item.rowNumber}: ${item.reason}`
+              )
+              .join('\n')}`
+          : '';
+
+      alert(
+        `Import hoàn tất.\nTạo mới: ${result.createdCount}\nBỏ qua: ${result.skippedCount}${errorPreview}`
+      );
+
+      window.location.reload();
+    } catch (error) {
+      alert('Lỗi đọc file Excel: ' + String(error));
+    } finally {
+      event.target.value = '';
+      setImporting(false);
+    }
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 border p-4 rounded">
+    <div className="space-y-4">
+      {!editingTask ? (
+        <div className="rounded border p-4">
+          <div className="mb-3">
+            <h3 className="font-semibold">Import từ Excel</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              File cần có 2 cột theo thứ tự: <strong>Mã dự án</strong> và{' '}
+              <strong>Tên hạng mục</strong>.
+            </p>
+          </div>
+
+          <label className="block text-sm font-medium">Chọn file Excel</label>
+          <input
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            onChange={handleImportFile}
+            disabled={importing}
+            className="mt-2 block w-full rounded border p-2 text-sm"
+          />
+
+          <p className="mt-2 text-xs text-muted-foreground">
+            Hệ thống sẽ bỏ qua các dòng trùng hạng mục trong cùng mã dự án hoặc mã
+            dự án không tồn tại.
+          </p>
+
+          {importing ? (
+            <p className="mt-3 text-sm font-medium">Đang import file Excel...</p>
+          ) : null}
+        </div>
+      ) : null}
+
+      <form onSubmit={handleSubmit} className="space-y-3 border p-4 rounded">
       <div className="flex items-center justify-between gap-3">
         <h2 className="font-bold">
           {editingTask ? 'Sửa hạng mục' : 'Thêm hạng mục cho dự án'}
@@ -171,6 +284,7 @@ export default function ProjectTaskForm({ projects, editingTask }: Props) {
       >
         {loading ? 'Đang lưu...' : editingTask ? 'Cập nhật' : 'Lưu'}
       </button>
-    </form>
+      </form>
+    </div>
   );
 }
