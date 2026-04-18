@@ -1,6 +1,5 @@
 'use client';
 
-import { createClient } from '@/lib/supabase/client';
 import { useState } from 'react';
 
 type WorkerRecord = {
@@ -9,7 +8,6 @@ type WorkerRecord = {
 };
 
 export default function WorkerActions({ worker }: { worker: WorkerRecord }) {
-  const supabase = createClient();
   const [loading, setLoading] = useState(false);
 
   const handleDelete = async () => {
@@ -18,22 +16,16 @@ export default function WorkerActions({ worker }: { worker: WorkerRecord }) {
 
     try {
       setLoading(true);
+      const res = await fetch('/api/workers', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: worker.id }),
+      });
 
-      const { data, error } = await supabase
-        .from('workers')
-        .delete()
-        .eq('id', worker.id)
-        .select();
+      const data = await res.json();
 
-      console.log('DELETE RESULT:', { data, error, workerId: worker.id });
-
-      if (error) {
-        alert('Xóa thất bại: ' + error.message);
-        return;
-      }
-
-      if (!data || data.length === 0) {
-        alert('Không xóa được bản ghi này.');
+      if (!res.ok) {
+        alert('Xóa thất bại: ' + (data.error ?? 'Lỗi hệ thống'));
         return;
       }
 

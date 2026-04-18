@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createAdminClient } from '@/lib/supabase/admin';
-import { createClient } from '@/lib/supabase/server';
+import { createMutationClient } from '@/lib/supabase/admin';
 
 const taskSchema = z.object({
   project_id: z.string().uuid('project_id không hợp lệ'),
@@ -13,7 +12,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const parsed = taskSchema.parse(body);
-    const supabase = await createClient();
+    const supabase = await createMutationClient();
 
     const { data, error } = await supabase
       .from('project_tasks')
@@ -50,7 +49,7 @@ export async function PATCH(request: Request) {
         id: z.string().uuid('id không hợp lệ'),
       })
       .parse(body);
-    const supabase = await createClient();
+    const supabase = await createMutationClient();
 
     const { data, error } = await supabase
       .from('project_tasks')
@@ -89,7 +88,7 @@ export async function DELETE(request: Request) {
       })
       .parse(body);
 
-    const supabase = createAdminClient() ?? (await createClient());
+    const supabase = await createMutationClient();
     const { data, error } = await supabase
       .from('project_tasks')
       .delete()

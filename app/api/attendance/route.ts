@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createAdminClient } from '@/lib/supabase/admin';
-import { createClient } from '@/lib/supabase/server';
+import { createMutationClient } from '@/lib/supabase/admin';
 
 const attendanceSchema = z.object({
   work_date: z.string().min(1, 'Ngày làm là bắt buộc'),
@@ -13,7 +12,7 @@ const attendanceSchema = z.object({
 });
 
 async function resolveLegacyWorkerId() {
-  const supabase = await createClient();
+  const supabase = await createMutationClient();
 
   const { data: existingWorker, error: existingWorkerError } = await supabase
     .from('workers')
@@ -66,7 +65,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const parsed = attendanceSchema.parse(body);
-    const supabase = await createClient();
+    const supabase = await createMutationClient();
     const workerId = await resolveLegacyWorkerId();
 
     const { data, error } = await supabase
@@ -108,7 +107,7 @@ export async function DELETE(request: Request) {
       })
       .parse(body);
 
-    const supabase = createAdminClient() ?? (await createClient());
+    const supabase = await createMutationClient();
 
     const { data, error } = await supabase
       .from('attendance_entries')
@@ -158,7 +157,7 @@ export async function PATCH(request: Request) {
     });
 
     const parsed = attendanceSchema.parse(body);
-    const supabase = await createClient();
+    const supabase = await createMutationClient();
     const workerId = await resolveLegacyWorkerId();
 
     const { data, error } = await supabase

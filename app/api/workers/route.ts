@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
+import { createMutationClient } from '@/lib/supabase/admin';
 
 const workerSchema = z.object({
   worker_code: z.string().min(1, 'Mã công nhân là bắt buộc'),
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const parsed = workerSchema.parse(body);
-    const supabase = await createClient();
+    const supabase = await createMutationClient();
 
     const { data, error } = await supabase
       .from('workers')
@@ -35,6 +35,47 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(data, { status: 201 });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: error.issues.map((issue) => issue.message).join(', ') },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({ error: 'Lỗi hệ thống' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const body = await request.json();
+    const { id } = z
+      .object({
+        id: z.string().uuid('id không hợp lệ'),
+      })
+      .parse(body);
+
+    const supabase = await createMutationClient();
+    const { data, error } = await supabase
+      .from('workers')
+      .delete()
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    if (!data) {
+      return NextResponse.json(
+        { error: 'Không xóa được công nhân.' },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

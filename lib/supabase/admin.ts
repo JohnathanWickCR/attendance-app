@@ -1,4 +1,5 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { createClient as createServerClient } from '@/lib/supabase/server';
 
 export function createAdminClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -15,4 +16,8 @@ export function createAdminClient() {
       persistSession: false,
     },
   });
+}
+
+export async function createMutationClient() {
+  return createAdminClient() ?? (await createServerClient());
 }

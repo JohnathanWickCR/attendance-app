@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createAdminClient } from '@/lib/supabase/admin';
-import { createClient } from '@/lib/supabase/server';
+import { createMutationClient } from '@/lib/supabase/admin';
 
 const projectSchema = z.object({
   project_code: z.string().min(1, 'Mã dự án là bắt buộc'),
@@ -13,7 +12,7 @@ async function ensureUniqueProjectName(
   projectName: string,
   excludeId?: string
 ) {
-  const supabase = await createClient();
+  const supabase = await createMutationClient();
   let query = supabase
     .from('projects')
     .select('id')
@@ -52,7 +51,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const parsed = projectSchema.parse(body);
     await ensureUniqueProjectName(parsed.project_name);
-    const supabase = await createClient();
+    const supabase = await createMutationClient();
 
     const { data, error } = await supabase
       .from('projects')
@@ -96,7 +95,7 @@ export async function PATCH(request: Request) {
       })
       .parse(body);
     await ensureUniqueProjectName(parsed.project_name, parsed.id);
-    const supabase = await createClient();
+    const supabase = await createMutationClient();
 
     const { data, error } = await supabase
       .from('projects')
@@ -141,7 +140,7 @@ export async function DELETE(request: Request) {
       })
       .parse(body);
 
-    const supabase = createAdminClient() ?? (await createClient());
+    const supabase = await createMutationClient();
     const { data, error } = await supabase
       .from('projects')
       .delete()
